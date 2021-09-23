@@ -92,7 +92,7 @@ function updateDB(fromUrl=baseDataURL, toFile=dbPath) {
 async function regenSetFiles() {
     if (lock) return; lock = true;
     console.log('Regenerating set data...');
-    fs.mkdirSync(dbFolder,{recursive: true});
+    fs.mkdirSync(dirname(join(dbFolder,'test.json')), {recursive: true});
     const saveFile = set => 
         fs.promises.writeFile(
             join(dbFolder,set.code+'.json'),
