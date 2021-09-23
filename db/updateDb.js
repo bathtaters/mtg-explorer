@@ -4,7 +4,7 @@
 
 const fs = require('fs');
 const https = require('https');
-const { join } = require('path');
+const { join, dirname } = require('path');
 const JSONStream = require('JSONStream');
 const { hidingFields, additionalTitles, normTitle } = require('../services/setUtils');
 const { mapSetToTokens, errToken, removeEqualTokens } = require('../services/tokenUtils');
@@ -75,6 +75,7 @@ let lock = false; // DB lock, engage while working
 function updateDB(fromUrl=baseDataURL, toFile=dbPath) {
     if (lock) return; lock = true;
     console.log('Downloading master database...');
+    fs.mkdirSync(dirname(toFile),{recursive: true});
     return new Promise((resolve) => https.get(fromUrl, (res) => {
         const filePath = fs.createWriteStream(toFile);
         res.pipe(filePath);
