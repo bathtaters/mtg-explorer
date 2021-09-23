@@ -92,7 +92,7 @@ function updateDB(fromUrl=baseDataURL, toFile=dbPath) {
 async function regenSetFiles() {
     if (lock) return; lock = true;
     console.log('Regenerating set data...');
-    fs.mkdirSync(dirname(join(dbFolder,'test.json')), {recursive: true});
+    fs.mkdirSync(dbFolder, {recursive: true});
     const saveFile = set => 
         fs.promises.writeFile(
             join(dbFolder,set.code+'.json'),
@@ -132,5 +132,5 @@ module.exports = {
 
 // Generate missing files
 if (!fs.existsSync(dbPath)) updateDB();
-else if (!fs.readdirSync(dbFolder).length) regenAll();
+else if (!fs.existsSync(dbFolder) || !fs.readdirSync(dbFolder).length) regenAll();
 else if (!nameMap) regenNameMap();
