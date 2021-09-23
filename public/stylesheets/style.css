@@ -1,0 +1,61 @@
+body {
+  background-color: #112;
+  color: #FFE;
+  padding: 20px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #9DF;
+}
+
+a:hover {
+  color: #4CF;
+}
+
+.thumbnail, .thumbnail-img {
+  width: 60px;
+  height: 85px;
+  display: inline-block;
+}
+.thumbnail {
+  background: #555;
+  position: relative;
+}
+.thumbnail:hover > .thumbnail-img {
+  width: 480px;
+  height: 680px;
+  position: fixed;
+  top: calc(50vh - 340px);
+  left: calc(2rem + 82px);
+  z-index: 1000;
+}
+
+.setWrapper { padding-bottom: 1rem; }
+.formWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.formOptions {
+  display: flex;
+  flex-direction: row;
+  align-items: start;
+  justify-content: space-between;
+  min-width: 25rem;
+}
+.m2 { margin: 0.5rem; }
+.p2 { padding: 0.5rem; }
+.center { text-align: center; }
+.left { text-align: left; }
+
+
+/* Token table */
+
+table { border-spacing: 0; }
+th, td {
+  text-align: left;
+  border: solid 1px #554;
+  padding: 0.5rem;
+}

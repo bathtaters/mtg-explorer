@@ -1,0 +1,30 @@
+extends layout
+
+block content
+  h1 Token List
+  
+  each set in sets
+    div.setWrapper
+        h4= set.name + ' (' + set.code + ')'
+        if !set.error
+            table
+                tr
+                    th.tImg Pic
+                    th.tName Name
+                    th.tDetail Detail
+                    th.tColor Color(s)
+                    th.tCards Related Cards
+                each token in set.tokens
+                    tr
+                        td.tImg
+                            a(href=`https://api.scryfall.com/cards/${token.id.scryfall}?format=image` target="_blank")
+                                span.thumbnail(id=token.id.scryfall)
+                        td.tName= token.name
+                        td.tDetail= token.footer || token.types
+                        td.tColor= token.colors.join(', ') || 'C'
+                        td.tCards= token.reverseRelated.join(', ')
+        else
+            i= set.error
+    
+block footer
+    script(src=fixUrl('/javascripts/getImages.js'))

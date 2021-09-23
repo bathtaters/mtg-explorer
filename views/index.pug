@@ -1,0 +1,26 @@
+extends layout
+
+block content
+  h1 Retrieve Token List
+  form.formWrapper(action=fixUrl('/tokens') method="POST")
+    h3.m2 Enter Sets:
+    i.m2 One set per line. Can be set code or name.
+    textarea.m2#sets(name="sets", cols="30", rows="10")
+    .m2.center
+      .m2 Sort Sets by:
+      .formOptions.left
+        div
+          input#sortList(type="radio" name="sort" value="list" checked)
+          label(for="sortList") List order
+          br
+          input#sortDateAsc(type="radio" name="sort" value="dateAsc")
+          label(for="sortDateAsc") Date (Newest first)
+          br
+          input#sortDateDesc(type="radio" name="sort" value="dateDesc")
+          label(for="sortDateDesc") Date (Oldest first)
+        div
+          input#unique(type="checkbox" name="unique")
+          label.inline(for="unique") Hide repeated tokens
+
+    input.m2.p2(type="submit" value="Find")
+
