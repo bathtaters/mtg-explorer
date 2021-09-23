@@ -98,6 +98,8 @@ async function regenSetFiles() {
             JSON.stringify(hidingFields(set)),
             {encoding: 'utf8'}
         );
+    
+    fs.mkdirSync(dbFolder,{recursive: true});
     return Promise.all(await readJSON(dbPath, ['data',true], null, saveFile))
         .then(() => {console.log('DB files saved.'); lock = false;});
 }
@@ -116,6 +118,7 @@ async function regenNameMap() {
         return o;
     },{});
     nameMap = newNameMap;
+    fs.mkdirSync(dirname(nameMapPath),{recursive: true});
     return fs.promises.writeFile(nameMapPath,JSON.stringify(newNameMap),{encoding: 'utf8'})
         .then(() => {console.log('Name Map saved.'); lock = false;});
 }
