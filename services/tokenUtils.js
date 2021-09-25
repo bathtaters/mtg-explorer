@@ -49,7 +49,7 @@ exports.mapSetToTokens = data => {
     return mapBaseSet(data, {tokens: newTokens});
 };
 const mapToken = ({
-    name, faceName, reverseRelated,
+    name, faceName, reverseRelated, keywords,
     colors, types, text, power, toughness,
     number, identifiers, side, isReprint,
     availability, isOnlineOnly
@@ -63,7 +63,7 @@ const mapToken = ({
         oracle: identifiers.scryfallOracleId,
     }, 
     footer: power || toughness ? power+'/'+toughness : null,
-    reverseRelated, colors, types, text, number, side, isReprint,
+    reverseRelated, colors, types, keywords, text, number, side, isReprint,
     availability, isOnlineOnly
 });
 const filterToken = ({availability, isOnlineOnly}) => 

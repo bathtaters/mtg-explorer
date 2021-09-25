@@ -13,6 +13,7 @@ block content
                     th.tName Name
                     th.tDetail Detail
                     th.tColor Color(s)
+                    th.tText Keywords
                     th.tCards Related Cards
                 each token in set.tokens
                     tr
@@ -22,6 +23,7 @@ block content
                         td.tName= token.name
                         td.tDetail= token.footer || token.types.filter(t=>t!=='Token')
                         td.tColor= token.colors.join(', ') || 'C'
+                        td.tText= token.keywords
                         td.tCards= token.reverseRelated.join(', ')
         else
             i= set.error
