@@ -6,7 +6,7 @@ const fs = require('fs');
 const https = require('https');
 const { join, dirname } = require('path');
 const JSONStream = require('JSONStream');
-const { hidingFields, additionalTitles, normTitle } = require('../services/setUtils');
+const { hidingFields, additionalTitles, normTitle, getSetCodes } = require('../services/setUtils');
 const { mapSetToTokens, errToken, removeEqualTokens } = require('../services/tokenUtils');
 
 // Path to Stored Data
@@ -21,6 +21,7 @@ const showProgress = 100;
 // Load name map
 let nameMap = fs.existsSync(nameMapPath) ?
     require('./storage/nameMap.json') : null;
+let setCodes = getSetCodes(nameMap);
 
 // Generic JSON Parser - filter/map works like array.filter()/array.map()
 function readJSON(path, parsePath, filter=undefined, map=undefined, findLimit=0, parseLimit=0) {
@@ -70,6 +71,22 @@ async function getTokens(setNames, sortByDate=0, unique=true) {
     return result;
 }
 
+// Check sets, return invalid set list
+function checkSets(setNames) {
+    console.log('Searching sets:',setNames);
+    const codes = setNames.map(name => nameMap[normTitle(name)] || name.toUpperCase());
+    let invalid = [];
+    for (let i = 0, e = codes.length; i < e; i++) {
+        if (!setCodes.includes(codes[i])) invalid.push(setNames[i]);
+    }
+    console.log(
+        invalid.length ?
+        `Found ${invalid.length} invalid sets: ${invalid.join(',')}` :
+        'All sets are valid.'
+    );
+    return invalid;
+}
+
 // Download JSON from MTGJSON
 let lock = false; // DB lock, engage while working
 function updateDB(fromUrl=baseDataURL, toFile=dbPath) {
@@ -117,6 +134,7 @@ async function regenNameMap() {
         return o;
     },{});
     nameMap = newNameMap;
+    setCodes = getSetCodes(newNameMap);
     fs.mkdirSync(dirname(nameMapPath),{recursive: true});
     return fs.promises.writeFile(nameMapPath,JSON.stringify(newNameMap),{encoding: 'utf8'})
         .then(() => {console.log('Name Map saved.'); lock = false;});
@@ -125,7 +143,7 @@ async function regenNameMap() {
 const regenAll = () => regenNameMap().then(regenSetFiles);
 
 module.exports = {
-    getTokens, updateDB,
+    getTokens, checkSets, updateDB,
     isLocked: () => lock,
     admin: {regenNameMap, regenSetFiles, regenAll},
 };

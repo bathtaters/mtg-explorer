@@ -22,5 +22,11 @@ block content
           input#unique(type="checkbox" name="unique")
           label.inline(for="unique") Hide repeated tokens
 
+    input.m2.p2#checkSets(type="button" value="Check Set")
+
     input.m2.p2(type="submit" value="Find")
 
+  #setResults
+
+block footer
+    script(src=fixUrl('/javascripts/indexEvents.js'))

@@ -53,4 +53,13 @@ const additionalTitles = (title,code) => {
     return [];
 }
 
-module.exports = { mapBaseSet, hidingFields, additionalTitles, normTitle }
+// Extract codes from NameMap
+const getSetCodes = nameMap => nameMap ? Object.keys(nameMap).reduce((codes,key) => {
+    if (!codes.includes(nameMap[key])) codes.push(nameMap[key].toUpperCase());
+    return codes;
+}, []) : [];
+
+// Sanitize user input
+const sanitizeSets = sets => sets.split('\n').map(s=>s.trim()).filter(s=>!!s);
+
+module.exports = { mapBaseSet, hidingFields, additionalTitles, normTitle, getSetCodes, sanitizeSets }

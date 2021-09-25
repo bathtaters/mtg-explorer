@@ -59,3 +59,8 @@ th, td {
   border: solid 1px #554;
   padding: 0.5rem;
 }
+
+#setResults {
+  font-family: monospace;
+  text-align: center;
+}
