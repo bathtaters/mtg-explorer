@@ -5,6 +5,8 @@ const fixUrl = url => url.replace('/'+URL_PREFIX,'') || '/';
 
 exports.rmv = (req,res,next) => {
     if (!URL_PREFIX) return next();
+    else if (RegExp(URL_PREFIX+'$').test(req.originalUrl))
+        return res.redirect(301, req.originalUrl + '/');
     
     req.originalUrl = fixUrl(req.originalUrl);
     req.url = fixUrl(req.url);
@@ -13,7 +15,6 @@ exports.rmv = (req,res,next) => {
     req._parsedUrl.path = fixUrl(req._parsedUrl.path);
     req._parsedUrl.href = fixUrl(req._parsedUrl.href);
     req._parsedUrl._raw = fixUrl(req._parsedUrl._raw);
-
 
     return next();
 };
