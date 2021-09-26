@@ -41,13 +41,32 @@ exports.removeEqualTokens = (setArr) => {
     return result;
 };
 
+exports.uniqueTokenId = token => (
+    token.name + '_' +
+    (token.text || '0') + '_' +
+    (token.footer || getFooter(token) || '0') + '_' +
+    (token.colors || ['0']).join('') + '_' +
+    (getTypes(token) || ['0']).join('_')
+).replace(/\s,'\./g,'')
+ .replace(/[^\w_-]/g,'_')
+ .toLowerCase();
+
 
 // Data to retrieve from token
-exports.mapSetToTokens = data => {
-    const newTokens = data.tokens.filter(filterToken).map(mapToken);
+exports.mapSetToTokens = async (data, getAltSets) => {
+    let newTokens = data.tokens.filter(filterToken).map(mapToken);
+    if (getAltSets) newTokens = await Promise.all(newTokens.map(t=>appendAltSets(t,getAltSets)));
     console.log(data.name, 'Tokens:', newTokens.length, 'of', data.tokens.length);
     return mapBaseSet(data, {tokens: newTokens});
 };
+const getTypes = token =>
+    token.types ?
+    token.types.filter(t=>t!=='Token') :
+    token.types;
+const getFooter = token => 
+    token.power || token.toughness ?
+    (token.power||'-')+'/'+(token.toughness||'-') :
+    token.power;
 const mapToken = ({
     name, faceName, reverseRelated, keywords,
     colors, types, text, power, toughness,
@@ -62,10 +81,14 @@ const mapToken = ({
         scryfall: identifiers.scryfallId,
         oracle: identifiers.scryfallOracleId,
     }, 
-    footer: power || toughness ? power+'/'+toughness : null,
-    reverseRelated, colors, types, keywords, text, number, side, isReprint,
+    types: getTypes({types}),
+    footer: getFooter({power, toughness}),
+    reverseRelated, colors, keywords, text, number, side, isReprint,
     availability, isOnlineOnly
 });
+const appendAltSets = async (token, getAltSets) => { 
+    token.altSets = await getAltSets(token); return token;
+}
 const filterToken = ({availability, isOnlineOnly}) => 
     (!availability || availability.includes('paper')) && !isOnlineOnly;
 

@@ -1,19 +1,19 @@
 const express = require('express');
 const router = express.Router();
+const { addSlash } = require('../services/fixUrl');
 const { sanitizeSets } = require('../services/setUtils');
 const { getTokens, checkSets, updateDB, isLocked } = require('../db/updateDb');
 
 /* GET home page. */
-router.get('/', function(req, res) {
+router.get('/', addSlash, function(req, res) {
   res.render('index', { title: 'Token Find' });
 });
 
 /* Check set list */
-router.post('/sets', function(req, res) {
+router.post('/sets', async function(req, res) {
   console.log('Sets Req:',req.body);
 
-  const invalid = checkSets(sanitizeSets(req.body.sets));
-
+  const invalid = await checkSets(sanitizeSets(req.body.sets));
   return res.status(200).send({ invalid });
 });
 

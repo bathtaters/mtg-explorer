@@ -15,16 +15,18 @@ block content
                     th.tColor Color(s)
                     th.tText Keywords
                     th.tCards Related Cards
+                    th.tSets Other Sets
                 each token in set.tokens
                     tr
                         td.tImg
                             a(href=`https://api.scryfall.com/cards/${token.id.scryfall}?format=image` target="_blank")
                                 span.thumbnail(id=token.id.scryfall)
                         td.tName= token.name
-                        td.tDetail= token.footer || token.types.filter(t=>t!=='Token')
-                        td.tColor= token.colors.join(', ') || 'C'
+                        td.tDetail= token.footer || token.types
+                        td.tColor= token.colors.join ? token.colors.join(', ') || 'C' : 'Missing'
                         td.tText= token.keywords
-                        td.tCards= token.reverseRelated.join(', ')
+                        td.tCards= token.reverseRelated.join ? token.reverseRelated.join(', ') : 'Missing'
+                        td.tSets= token.altSets.join ? token.altSets.join(', ') + ' ('+token.altSets.length+')' : 'Missing'
         else
             i= set.error
     

@@ -49,7 +49,7 @@ a:hover {
 .p2 { padding: 0.5rem; }
 .center { text-align: center; }
 .left { text-align: left; }
-
+.inline { display: inline-block; }
 
 /* Token table */
 

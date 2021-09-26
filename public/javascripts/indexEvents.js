@@ -4,7 +4,7 @@ function mtgExplorerButtons() {
         console.debug("checking sets");
         var setList = document.getElementById('sets').value;
 
-        return fetch('./sets', {
+        return fetch('/sets', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
@@ -12,6 +12,7 @@ function mtgExplorerButtons() {
             })
             .then(function(response) { return response.json(); })
             .then(function(response) {
+                console.debug("Response:",response);
                 if (!response.invalid) {
                     console.error('Error checking sets: ',response);
                 } else if (response.invalid.length) {

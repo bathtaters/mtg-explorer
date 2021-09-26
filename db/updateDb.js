@@ -7,12 +7,13 @@ const https = require('https');
 const { join, dirname } = require('path');
 const JSONStream = require('JSONStream');
 const { hidingFields, additionalTitles, normTitle, getSetCodes } = require('../services/setUtils');
-const { mapSetToTokens, errToken, removeEqualTokens } = require('../services/tokenUtils');
+const { mapSetToTokens, errToken, removeEqualTokens, uniqueTokenId } = require('../services/tokenUtils');
 
 // Path to Stored Data
 const dbPath = join(__dirname,'storage','AllPrintings.json');
 const dbFolder = join(__dirname,'storage','sets');
 const nameMapPath = join(__dirname,'storage','nameMap.json');
+const multiSetPath = join(__dirname,'storage','setMap.json');
 const baseDataURL = 'https://mtgjson.com/api/v5/AllPrintings.json';
 
 // Update every N records parsed (0 == don't show)
@@ -22,6 +23,8 @@ const showProgress = 100;
 let nameMap = fs.existsSync(nameMapPath) ?
     require('./storage/nameMap.json') : null;
 let setCodes = getSetCodes(nameMap);
+let setMap = fs.existsSync(multiSetPath) ?
+    require('./storage/setMap.json') : null;
 
 // Generic JSON Parser - filter/map works like array.filter()/array.map()
 function readJSON(path, parsePath, filter=undefined, map=undefined, findLimit=0, parseLimit=0) {
@@ -60,7 +63,7 @@ async function getTokens(setNames, sortByDate=0, unique=true) {
     console.time('Retrieved records');
     let result = await Promise.all(setNames.map(code =>
         fs.promises.readFile(join(dbFolder,code+'.json'),{encoding: 'utf8'})
-            .then(data => mapSetToTokens(JSON.parse(data)))
+            .then(data => mapSetToTokens(JSON.parse(data),getAltSets))
             .catch(errToken(code))
     ));
     if (sortByDate) result.sort((a,b) => (a.date - b.date) * sortByDate);
@@ -71,9 +74,16 @@ async function getTokens(setNames, sortByDate=0, unique=true) {
     return result;
 }
 
+// Get sets that use each token
+async function getAltSets(token) {
+    if (!setMap) await regenMultiSetMap();
+    const sets = setMap[uniqueTokenId(token)] || [];
+    return sets.filter(s=>s!==token.setCode);
+}
+
 // Check sets, return invalid set list
-function checkSets(setNames) {
-    console.log('Searching sets:',setNames);
+async function checkSets(setNames) {
+    if (!nameMap) await regenNameMap();
     const codes = setNames.map(name => nameMap[normTitle(name)] || name.toUpperCase());
     let invalid = [];
     for (let i = 0, e = codes.length; i < e; i++) {
@@ -103,6 +113,39 @@ function updateDB(fromUrl=baseDataURL, toFile=dbPath) {
             return resolve(null);
         })
     })).then(regenAll);
+}
+
+async function regenMultiSetMap() {
+    if (lock) return; lock = true;
+    console.log('Regenerating multi-set map...');
+    fs.mkdirSync(dirname(multiSetPath), {recursive: true});
+
+    // Create map
+    let newMap = {};
+    await readJSON(
+        dbPath, ['data',true],
+        set => set.tokens && set.tokens.length,
+        set => {
+            for (const token of set.tokens) {
+                const id = uniqueTokenId(token);
+                if (!newMap[id]) newMap[id] = [token.setCode];
+                else newMap[id].push(token.setCode);
+            }
+        }
+    );
+
+    // Filter map
+    Object.keys(newMap).forEach(k => {
+        if (newMap[k].length === 1) delete newMap[k];
+    });
+
+    // Store map
+    setMap = newMap;
+    return fs.promises.writeFile(
+        multiSetPath,
+        JSON.stringify(newMap),
+        {encoding: 'utf8'}
+    ).then(() => {console.log('Multi-set map saved.'); lock = false;});
 }
 
 // Generate SET files from master object
@@ -140,15 +183,16 @@ async function regenNameMap() {
         .then(() => {console.log('Name Map saved.'); lock = false;});
 }
 
-const regenAll = () => regenNameMap().then(regenSetFiles);
+const regenAll = () => regenNameMap().then(regenSetFiles).then(regenMultiSetMap);
 
 module.exports = {
-    getTokens, checkSets, updateDB,
+    getTokens, checkSets, getAltSets, updateDB,
     isLocked: () => lock,
-    admin: {regenNameMap, regenSetFiles, regenAll},
+    admin: {regenNameMap, regenMultiSetMap, regenSetFiles, regenAll},
 };
 
 // Generate missing files
 if (!fs.existsSync(dbPath)) updateDB();
 else if (!fs.existsSync(dbFolder) || !fs.readdirSync(dbFolder).length) regenAll();
 else if (!nameMap) regenNameMap();
+else if (!setMap) regenMultiSetMap();
