@@ -25,7 +25,12 @@ block content
                         td.tDetail= token.footer || token.types
                         td.tColor= token.colors.join ? token.colors.join(', ') || 'C' : 'Missing'
                         td.tText= token.keywords
-                        td.tCards= token.reverseRelated.join ? token.reverseRelated.join(', ') : 'Missing'
+                        td.tCards
+                            each card,idx in token.reverseRelated
+                                if idx
+                                    span= ', '
+                                a(href=card.url target="_blank")= card.name
+                            //-= token.reverseRelated.join ? token.reverseRelated.join(', ') : 'Missing'
                         td.tSets= token.altSets.join ? token.altSets.join(', ') + ' ('+token.altSets.length+')' : 'Missing'
         else
             i= set.error

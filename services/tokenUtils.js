@@ -71,7 +71,7 @@ const mapToken = ({
     name, faceName, reverseRelated, keywords,
     colors, types, text, power, toughness,
     number, identifiers, side, isReprint,
-    availability, isOnlineOnly
+    availability, isOnlineOnly, setCode
 }) => ({
     name: faceName || name,
     fullName: faceName ? name : undefined,
@@ -83,7 +83,15 @@ const mapToken = ({
     }, 
     types: getTypes({types}),
     footer: getFooter({power, toughness}),
-    reverseRelated, colors, keywords, text, number, side, isReprint,
+    reverseRelated: reverseRelated.map(card => ({
+        name: card,
+        url: `https://scryfall.com/search?q=${
+            escape(card).replace(/%20/,'+')
+        }+set%3A${
+            setCode.length > 3 ? setCode.replace(/^T/,'') : setCode
+        }`,
+    })),
+    colors, keywords, text, number, side, isReprint,
     availability, isOnlineOnly
 });
 const appendAltSets = async (token, getAltSets) => { 
