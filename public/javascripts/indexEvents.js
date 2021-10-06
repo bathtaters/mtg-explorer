@@ -1,7 +1,7 @@
 function mtgExplorerButtons() {
     function fetchSets() {
         // var elem = event.target || event.srcElemnt || event;
-        console.debug("checking sets");
+        // console.debug("checking sets");
         var setList = document.getElementById('sets').value;
 
         return fetch('./sets', {
@@ -12,7 +12,7 @@ function mtgExplorerButtons() {
             })
             .then(function(response) { return response.json(); })
             .then(function(response) {
-                console.debug("Response:",response);
+                // console.debug("Response:",response);
                 if (!response.invalid) {
                     console.error('Error checking sets: ',response);
                 } else if (response.invalid.length) {
