@@ -6,7 +6,7 @@ const fs = require('fs');
 const https = require('https');
 const { join, dirname } = require('path');
 const JSONStream = require('JSONStream');
-const { hidingFields, additionalTitles, normTitle, getSetCodes } = require('../services/setUtils');
+const { hidingFields, additionalTitles, normTitle, getSetCodes, fixSetCode } = require('../services/setUtils');
 const { mapSetToTokens, errToken, removeEqualTokens, uniqueTokenId } = require('../services/tokenUtils');
 
 // Path to Stored Data
@@ -128,8 +128,9 @@ async function regenMultiSetMap() {
         set => {
             for (const token of set.tokens) {
                 const id = uniqueTokenId(token);
-                if (!newMap[id]) newMap[id] = [token.setCode];
-                else newMap[id].push(token.setCode);
+                const code = fixSetCode(token.setCode);
+                if (!newMap[id]) newMap[id] = [code];
+                else if (!newMap[id].includes(code)) newMap[id].push(code);
             }
         }
     );

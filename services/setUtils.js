@@ -62,4 +62,7 @@ const getSetCodes = nameMap => nameMap ? Object.keys(nameMap).reduce((codes,key)
 // Sanitize user input
 const sanitizeSets = sets => sets.split('\n').map(s=>s.trim()).filter(s=>!!s);
 
-module.exports = { mapBaseSet, hidingFields, additionalTitles, normTitle, getSetCodes, sanitizeSets }
+// Fix set codes (Remove the T)
+const fixSetCode = setCode => setCode.length > 3 ? setCode.replace(/^T/,'') : setCode;
+
+module.exports = { mapBaseSet, hidingFields, additionalTitles, normTitle, getSetCodes, fixSetCode, sanitizeSets }

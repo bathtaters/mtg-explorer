@@ -1,4 +1,4 @@
-const { mapBaseSet } = require('./setUtils');
+const { mapBaseSet, fixSetCode } = require('./setUtils');
 
 function arraysEqual(a, b) {
     if (a === b) return true;
@@ -83,19 +83,20 @@ const mapToken = ({
     }, 
     types: getTypes({types}),
     footer: getFooter({power, toughness}),
+    setCode: fixSetCode(setCode),
     reverseRelated: reverseRelated.map(card => ({
         name: card,
         url: `https://scryfall.com/search?q=${
             escape(card).replace(/%20/,'+')
-        }+set%3A${
-            setCode.length > 3 ? setCode.replace(/^T/,'') : setCode
-        }`,
+        }+set%3A${fixSetCode(setCode)}`,
     })),
     colors, keywords, text, number, side, isReprint,
     availability, isOnlineOnly
 });
 const appendAltSets = async (token, getAltSets) => { 
-    token.altSets = await getAltSets(token); return token;
+    token.altSets = await getAltSets(token)
+        .then(sets => sets.filter(s => s !== token.setCode));
+    return token;
 }
 const filterToken = ({availability, isOnlineOnly}) => 
     (!availability || availability.includes('paper')) && !isOnlineOnly;
