@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { addSlash } = require('../services/fixUrl');
 const { sanitizeSets } = require('../services/setUtils');
-const { getTokens, checkSets, updateDB, isLocked } = require('../db/updateDb');
+const { sanitizeCards } = require('../services/cardUtils');
+const { updateDB, isLocked } = require('../db/updateDb');
+const { getTokens, getCardTokens, checkSets } = require('../db/fetchDb');
 
 /* GET home page. */
 router.get('/', addSlash, function(req, res) {
@@ -27,6 +29,16 @@ router.post('/tokens', async function(req, res) {
   const sets = await getTokens(sanitizeSets(req.body.sets),sort,req.body.unique === 'on');
 
   res.render('tokens', { title: 'Token Results', sets });
+});
+
+/* POST card data. */
+router.post('/cards', async function(req, res) {
+  console.log('Cards Req:',req.body);
+
+  const cards = await getCardTokens(sanitizeCards(req.body.cards));
+  console.log('RESULT',cards);
+
+  res.render('cards', { title: 'Card Results', cards });
 });
 
 /* Update database (Secret link) */

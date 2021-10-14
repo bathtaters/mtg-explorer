@@ -1,0 +1,41 @@
+extends layout
+
+block content
+    h1 Card List
+
+    div.cardWrapper
+        table
+            tr
+                th.tImg Pic
+                th.tCards Related Card
+                th.tName Name
+                th.tDetail Detail
+                th.tColor Color(s)
+                th.tText Keywords
+                th.tSets Token Set(s)
+            each tokens, card in cards
+                if card !== '_missing'
+                    each token, idx in tokens
+                        tr
+                            td.tImg
+                                a(href=getTokenUrl(token.id.scryfall) target="_blank")
+                                    span.thumbnail(id=token.id.scryfall)
+                            if !idx
+                                td.tCards(rowspan=tokens.length)
+                                    a(href=getCardUrl(card) target="_blank")= card
+                            td.tName= token.name
+                            td.tDetail= token.footer || token.types
+                            td.tColor= token.colors.join ? token.colors.join(', ') || 'C' : 'Missing'
+                            td.tText= token.keywords
+                            td.tSets= token.altSets.join ? token.altSets.join(', ') + ' ('+token.altSets.length+')' : 'Missing'
+        
+    if cards._missing.length
+        .h1
+        #missingCards.m2
+            b No tokens found for:
+            ul
+                each card in cards._missing
+                    li= card
+    
+block footer
+    script(src=fixUrl('/javascripts/getImages.js'))

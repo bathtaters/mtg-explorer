@@ -2,10 +2,13 @@ extends layout
 
 block content
   h1 Retrieve Token List
+
   form.formWrapper(action=fixUrl('/tokens') method="POST")
     h3.m2 Enter Sets:
     i.m2 One set per line. Can be set code or name.
+
     textarea.m2#sets(name="sets", cols="30", rows="10")
+
     .m2.center
       .m2 Sort Sets by:
       .formOptions.left
@@ -23,11 +26,25 @@ block content
           label.inline(for="unique") Hide repeated tokens
 
     .m2
-      input.inline.m2.p2#checkSets(type="button" value="Check Set")
+      input.inline.m2.p2#checkSets(type="button" value="Check Sets")
 
-      input.inline.m2.p2(type="submit" value="Find Tokens")
+      input.inline.m2.p2(type="submit" value="Get Set Tokens")
+    
+  #setResults.m2.h1
 
-  #setResults
+  .m2.center
+    h2.m2 — OR — 
+  
+  .h1.m2
+
+  form.formWrapper(action=fixUrl('/cards') method="POST")
+    h3.m2 Enter Cards:
+    i.m2 One card name per line. Will ignore numbers at the start of each line.
+
+    textarea.m2#sets(name="cards", cols="30", rows="10")
+
+    .m2
+      input.inline.m2.p2#getCards(type="submit" value="Get Card Tokens")
 
 block footer
     script(src=fixUrl('/javascripts/indexEvents.js'))

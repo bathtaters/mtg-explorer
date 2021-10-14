@@ -45,6 +45,7 @@ a:hover {
   justify-content: space-between;
   min-width: 25rem;
 }
+.h1 { height: 1.2rem; }
 .m2 { margin: 0.5rem; }
 .p2 { padding: 0.5rem; }
 .center { text-align: center; }
