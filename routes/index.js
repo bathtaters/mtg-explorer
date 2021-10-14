@@ -33,10 +33,9 @@ router.post('/tokens', async function(req, res) {
 
 /* POST card data. */
 router.post('/cards', async function(req, res) {
-  console.log('Cards Req:',req.body);
+  console.log('Cards Req:',{...req.body, cards: '[' + req.body.cards.split('\n').length + ' lines]'});
 
   const cards = await getCardTokens(sanitizeCards(req.body.cards));
-  console.log('RESULT',cards);
 
   res.render('cards', { title: 'Card Results', cards });
 });
