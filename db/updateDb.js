@@ -7,17 +7,22 @@ const https = require('https');
 const { join, dirname } = require('path');
 const JSONStream = require('JSONStream');
 const { hidingFields, additionalTitles, normTitle, getSetCodes, fixSetCode } = require('../services/setUtils');
-const { mapSetToTokens, errToken, removeEqualTokens, uniqueTokenId } = require('../services/tokenUtils');
+const { appendTokens, cardFilename } = require('../services/cardUtils');
+const { uniqueTokenId, tokenFixes } = require('../services/tokenUtils');
 
 // Path to Stored Data
 const dbPath = join(__dirname,'storage','AllPrintings.json');
-const dbFolder = join(__dirname,'storage','sets');
+const setFolder = join(__dirname,'storage','sets');
+const cardFolder = join(__dirname,'storage','cards');
 const nameMapPath = join(__dirname,'storage','nameMap.json');
 const multiSetPath = join(__dirname,'storage','setMap.json');
 const baseDataURL = 'https://mtgjson.com/api/v5/AllPrintings.json';
 
 // Update every N records parsed (0 == don't show)
 const showProgress = 100; 
+
+// Flush mem after this many cardFiles are found (for regenCardFiles)
+const cardMemLimit = 100;
 
 // Load name map
 let nameMap = fs.existsSync(nameMapPath) ?
@@ -51,50 +56,6 @@ function readJSON(path, parsePath, filter=undefined, map=undefined, findLimit=0,
     }).catch(e => 
         console.error(`Error downloading data: ${e.message || e}`)
     );
-}
-
-// Get token-data from each set
-async function getTokens(setNames, sortByDate=0, unique=true) {
-    console.log('Searching sets:',setNames);
-    setNames = setNames.map(name => nameMap[normTitle(name)] || name.toUpperCase() );
-    console.log('As:',setNames);
-    
-    // Download payload to database
-    console.time('Retrieved records');
-    let result = await Promise.all(setNames.map(code =>
-        fs.promises.readFile(join(dbFolder,code+'.json'),{encoding: 'utf8'})
-            .then(data => mapSetToTokens(JSON.parse(data),getAltSets))
-            .catch(errToken(code))
-    ));
-    if (sortByDate) result.sort((a,b) => (a.date - b.date) * sortByDate);
-    if (unique) result = removeEqualTokens(result);
-    
-    console.timeEnd('Retrieved records');
-    console.log(new Date().toISOString(), `Retrieved ${result.length} of ${setNames.length} sets.`);
-    return result;
-}
-
-// Get sets that use each token
-async function getAltSets(token) {
-    if (!setMap) await regenMultiSetMap();
-    const sets = setMap[uniqueTokenId(token)] || [];
-    return sets.filter(s=>s!==token.setCode);
-}
-
-// Check sets, return invalid set list
-async function checkSets(setNames) {
-    if (!nameMap) await regenNameMap();
-    const codes = setNames.map(name => nameMap[normTitle(name)] || name.toUpperCase());
-    let invalid = [];
-    for (let i = 0, e = codes.length; i < e; i++) {
-        if (!setCodes.includes(codes[i])) invalid.push(setNames[i]);
-    }
-    console.log(
-        invalid.length ?
-        `Found ${invalid.length} invalid sets: ${invalid.join(',')}` :
-        'All sets are valid.'
-    );
-    return invalid;
 }
 
 // Download JSON from MTGJSON
@@ -153,15 +114,62 @@ async function regenMultiSetMap() {
 async function regenSetFiles() {
     if (lock) return; lock = true;
     console.log('Regenerating set data...');
-    fs.mkdirSync(dbFolder, {recursive: true});
-    const saveFile = set => 
-        fs.promises.writeFile(
-            join(dbFolder,set.code+'.json'),
+    fs.mkdirSync(setFolder, {recursive: true});
+    const saveFile = set => {
+        const fixes = tokenFixes.filter(f => f.testSet(set));
+        // Fix tokens w/o related cards
+        set.tokens = set.tokens.map(t => {
+            fixes.filter(f => f.test(t,set))
+                .forEach(f => { t = f.fix(t,set); });
+            return t;
+        });
+        return fs.promises.writeFile(
+            join(setFolder,set.code+'.json'),
             JSON.stringify(hidingFields(set)),
             {encoding: 'utf8'}
         );
+    }
     return Promise.all(await readJSON(dbPath, ['data',true], null, saveFile))
-        .then(() => {console.log('DB files saved.'); lock = false;});
+        .then(() => {console.log('DB files saved.'); lock = false;})
+        .then(regenCardFiles);
+}
+
+// Generate "Reverse Related" files from master object
+async function regenCardFiles() {
+    if (lock) return; lock = true;
+    console.log('Regenerating card-lookup data...');
+
+    const writeCards = cards => Promise.all(Object.keys(cards).map(async c => {
+        if (!cards[c] || !cards[c].length) return;
+        const path = join(cardFolder,cardFilename(c));
+        let tokens = {};
+        if (fs.existsSync(path))
+            tokens = await fs.promises.readFile(path).then(JSON.parse);
+        cards[c].forEach(t => {
+            const key = uniqueTokenId(t);
+            if (!Object.keys(tokens).includes(key)) tokens[key] = t;
+        });
+        return fs.promises.writeFile(path, JSON.stringify(tokens));
+    }));
+
+    let cards;
+    const sets = fs.readdirSync(setFolder);
+    await fs.promises.mkdir(cardFolder, {recursive: true});
+    for (const setFile of sets) {
+        const setTokens = await fs.promises.readFile(join(setFolder,setFile))
+            .then(s => JSON.parse(s)).then(s=>s && s.tokens);
+        if (!setTokens || !setTokens.length) continue; // skip empty sets
+
+        cards = appendTokens(setTokens, cards);
+
+        // Break up writes
+        if (Object.keys(cards).length > cardMemLimit) {
+            await writeCards(cards);
+            cards = {};
+        }
+    }
+    return writeCards(cards)
+        .then(() => {console.log('Card-lookup DB saved.'); lock = false;});
 }
 
 // Generate name map for translating full set names to set codes
@@ -187,13 +195,18 @@ async function regenNameMap() {
 const regenAll = () => regenNameMap().then(regenSetFiles).then(regenMultiSetMap);
 
 module.exports = {
-    getTokens, checkSets, getAltSets, updateDB,
-    isLocked: () => lock,
-    admin: {regenNameMap, regenMultiSetMap, regenSetFiles, regenAll},
+    updateDB, isLocked: () => lock,
+    admin: {regenNameMap, regenMultiSetMap, regenSetFiles, regenCardFiles, regenAll},
+    params: {setFolder, cardFolder, cardMemLimit},
+    get: {
+        nameMap: () => nameMap,
+        setCodes: () => setCodes,
+        setMap: () => setMap, 
+    }
 };
 
 // Generate missing files
 if (!fs.existsSync(dbPath)) updateDB();
-else if (!fs.existsSync(dbFolder) || !fs.readdirSync(dbFolder).length) regenAll();
+else if (!fs.existsSync(setFolder) || !fs.readdirSync(setFolder).length) regenAll();
 else if (!nameMap) regenNameMap();
 else if (!setMap) regenMultiSetMap();
