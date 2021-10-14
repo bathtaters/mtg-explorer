@@ -19,7 +19,7 @@ block content
                 each token in set.tokens
                     tr
                         td.tImg
-                            a(href=`https://api.scryfall.com/cards/${token.id.scryfall}?format=image` target="_blank")
+                            a(href=getTokenUrl(token.id.scryfall) target="_blank")
                                 span.thumbnail(id=token.id.scryfall)
                         td.tName= token.name
                         td.tDetail= token.footer || token.types
@@ -29,7 +29,7 @@ block content
                             each card,idx in token.reverseRelated
                                 if idx
                                     span= ', '
-                                a(href=card.url target="_blank")= card.name
+                                a(href=getCardUrl(card,set.code) target="_blank")= card
                             //-= token.reverseRelated.join ? token.reverseRelated.join(', ') : 'Missing'
                         td.tSets= token.altSets.join ? token.altSets.join(', ') + ' ('+token.altSets.length+')' : 'Missing'
         else

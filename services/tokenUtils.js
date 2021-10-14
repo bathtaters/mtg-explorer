@@ -1,5 +1,7 @@
 const { mapBaseSet, fixSetCode } = require('./setUtils');
 
+
+// Check if one token is the same as another
 function arraysEqual(a, b) {
     if (a === b) return true;
     if (a == null || b == null) return false;
@@ -41,6 +43,7 @@ exports.removeEqualTokens = (setArr) => {
     return result;
 };
 
+// Build a char safe ID string to help determine similar tokens
 exports.uniqueTokenId = token => (
     token.name + '_' +
     (token.text || '0') + '_' +
@@ -52,12 +55,29 @@ exports.uniqueTokenId = token => (
  .toLowerCase();
 
 
+// Card name to Scryfall URL
+exports.getCardUrl = (name, set = '') => 
+    'https://scryfall.com/search?q=' +
+    escape(name).replace(/%20/,'+') + 
+    (set ? '+set%3A' + fixSetCode(set) : '');
+exports.getTokenUrl = token =>
+    `https://api.scryfall.com/cards/${
+        typeof token === 'object' ?
+        token.id.scryfall : token
+    }?format=image`;
+
 // Data to retrieve from token
 exports.mapSetToTokens = async (data, getAltSets) => {
     let newTokens = data.tokens.filter(filterToken).map(mapToken);
     if (getAltSets) newTokens = await Promise.all(newTokens.map(t=>appendAltSets(t,getAltSets)));
     console.log(data.name, 'Tokens:', newTokens.length, 'of', data.tokens.length);
     return mapBaseSet(data, {tokens: newTokens});
+};
+exports.mapCardToTokens = async (tokens, getAltSets) => {
+    let newTokens = Object.values(tokens).filter(filterToken).map(mapToken);
+    if (getAltSets) newTokens = await Promise.all(newTokens.map(t=>appendAltSets(t,getAltSets,[false])));
+    // console.log('Tokens:', newTokens.length, 'of', data.tokens.length);
+    return newTokens;
 };
 const getTypes = token =>
     token.types ?
@@ -76,30 +96,40 @@ const mapToken = ({
     name: faceName || name,
     fullName: faceName ? name : undefined,
     id: {
-        cardKingdom: identifiers.cardKingdomId,
+        // cardKingdom: identifiers.cardKingdomId,
         gatherer: identifiers.multiverseId,
         scryfall: identifiers.scryfallId,
-        oracle: identifiers.scryfallOracleId,
+        // oracle: identifiers.scryfallOracleId,
     }, 
     types: getTypes({types}),
     footer: getFooter({power, toughness}),
     setCode: fixSetCode(setCode),
-    reverseRelated: reverseRelated.map(card => ({
-        name: card,
-        url: `https://scryfall.com/search?q=${
-            escape(card).replace(/%20/,'+')
-        }+set%3A${fixSetCode(setCode)}`,
-    })),
     colors, keywords, text, number, side, isReprint,
-    availability, isOnlineOnly
+    reverseRelated, availability, isOnlineOnly
 });
-const appendAltSets = async (token, getAltSets) => { 
-    token.altSets = await getAltSets(token)
-        .then(sets => sets.filter(s => s !== token.setCode));
+const appendAltSets = async (token, getAltSets, args = []) => { 
+    token.altSets = await getAltSets(token, ...args);
     return token;
-}
+};
+exports.appendAltSets = appendAltSets;
 const filterToken = ({availability, isOnlineOnly}) => 
     (!availability || availability.includes('paper')) && !isOnlineOnly;
+
+
+// Specific token fixes
+exports.tokenFixes = [
+    // Array of objects w/ 3 functions: { testSet, test, fix } 
+    //   if testSet(set) && test(token,set) are TRUE, then token = fix(token,set)
+    { // Fix Embalm tokens
+        testSet: set => /AKH/.test(set.code),
+        test: token => !token.reverseRelated || !token.reverseRelated.length && token.colors[0] === 'W',
+        fix: token => { token.reverseRelated = [token.name,]; return token; },
+    }, { // Fix Eternalize tokens
+        testSet: set => /HOU/.test(set.code),
+        test: token => !token.reverseRelated || !token.reverseRelated.length && token.colors[0] === 'B',
+        fix: token => { token.reverseRelated = [token.name,]; return token; },
+    },
+];
 
 // Format token-data on Error
 const noSetErr = 'ENOENT: no such file or directory';

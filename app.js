@@ -39,5 +39,10 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
+// Global funcs
+const { getCardUrl, getTokenUrl } = require('./services/tokenUtils');
 app.locals.fixUrl = fixUrl.add;
+app.locals.getCardUrl = getCardUrl;
+app.locals.getTokenUrl = getTokenUrl;
+
 module.exports = app;
