@@ -192,7 +192,7 @@ async function regenNameMap() {
         .then(() => {console.log('Name Map saved.'); lock = false;});
 }
 
-const regenAll = () => regenNameMap().then(regenSetFiles).then(regenMultiSetMap);
+const regenAll = () => regenNameMap().then(regenSetFiles).then(regenMultiSetMap).then(()=>console.log('DB update complete.'));
 
 module.exports = {
     updateDB, isLocked: () => lock,
