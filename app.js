@@ -1,7 +1,7 @@
 const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
-const cookieParser = require('cookie-parser');
+// const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const fixUrl = require('./services/fixUrl');
 
@@ -14,7 +14,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
 app.use(fixUrl.rmv);
-app.use(logger('dev'));
+app.use(logger(process.env.NODE_ENV === 'production' ? 'short' : 'dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 // app.use(cookieParser());
