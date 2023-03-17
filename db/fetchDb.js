@@ -1,5 +1,6 @@
 const fs = require('fs');
 const { join } = require('path');
+const logger = require('../services/logger');
 const { normTitle } = require('../services/setUtils');
 const { cardFilename } = require('../services/cardUtils');
 const { mapSetToTokens, mapCardToTokens, errToken, removeEqualTokens, uniqueTokenId } = require('../services/tokenUtils');
@@ -9,12 +10,12 @@ const { regenNameMap, regenMultiSetMap } = require('./updateDb').admin;
 
 // Get token-data from each set
 async function getTokens(setNames, sortByDate=0, unique=true) {
-  console.log('Searching sets:',setNames);
+  logger.log('Searching sets:',setNames);
   setNames = setNames.map(name => nameMap()[normTitle(name)] || name.toUpperCase() );
-  console.log('As:',setNames);
+  logger.log('As:',setNames);
   
   // Download payload to database
-  console.time('Retrieved records');
+  // console.time('Retrieved records');
   let result = await Promise.all(setNames.map(code =>
       fs.promises.readFile(join(setFolder,code+'.json'),{encoding: 'utf8'})
           .then(data => mapSetToTokens(JSON.parse(data),getAltSets))
@@ -23,8 +24,8 @@ async function getTokens(setNames, sortByDate=0, unique=true) {
   if (sortByDate) result.sort((a,b) => (a.date - b.date) * sortByDate);
   if (unique) result = removeEqualTokens(result);
   
-  console.timeEnd('Retrieved records');
-  console.log(new Date().toISOString(), `Retrieved ${result.length} of ${setNames.length} sets.`);
+  // console.timeEnd('Retrieved records');
+  logger.log(new Date().toISOString(), `Retrieved ${result.length} of ${setNames.length} sets.`);
   return result;
 }
 
@@ -43,7 +44,7 @@ async function checkSets(setNames) {
   for (let i = 0, e = codes.length; i < e; i++) {
       if (!setCodes().includes(codes[i])) invalid.push(setNames[i]);
   }
-  console.log(
+  logger.log(
       invalid.length ?
       `Found ${invalid.length} invalid sets: ${invalid.join(',')}` :
       'All sets are valid.'

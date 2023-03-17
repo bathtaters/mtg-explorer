@@ -6,6 +6,7 @@ const fs = require('fs');
 const https = require('https');
 const { join, dirname } = require('path');
 const JSONStream = require('JSONStream');
+const logger = require('../services/logger');
 const { hidingFields, additionalTitles, normTitle, getSetCodes, fixSetCode } = require('../services/setUtils');
 const { appendTokens, cardFilename } = require('../services/cardUtils');
 const { uniqueTokenId, tokenFixes } = require('../services/tokenUtils');
@@ -49,12 +50,12 @@ function readJSON(path, parsePath, filter=undefined, map=undefined, findLimit=0,
             // Show incremental progress
             if (++parsed === parseLimit && parseLimit) return jsonPipe.destroy();
             if (showProgress && parsed % showProgress == 0)
-                console.log(new Date().toISOString(), parsed+' records parsed.'); 
+                logger.log(new Date().toISOString(), parsed+' records parsed.'); 
         });
         jsonPipe.on('error', reject);
         jsonPipe.on('close', () => resolve(result) );
     }).catch(e => 
-        console.error(`Error downloading data: ${e.message || e}`)
+        logger.error(`Error downloading data: ${e.message || e}`)
     );
 }
 
@@ -62,14 +63,14 @@ function readJSON(path, parsePath, filter=undefined, map=undefined, findLimit=0,
 let lock = false; // DB lock, engage while working
 function updateDB(fromUrl=baseDataURL, toFile=dbPath) {
     if (lock) return; lock = true;
-    console.log('Downloading master database...');
+    logger.log('Downloading master database...');
     fs.mkdirSync(dirname(toFile),{recursive: true});
     return new Promise((resolve) => https.get(fromUrl, (res) => {
         const filePath = fs.createWriteStream(toFile);
         res.pipe(filePath);
         filePath.on('close',() => {
             filePath.close();
-            console.log('Master database download complete.');
+            logger.log('Master database download complete.');
             lock = false;
             return resolve(null);
         })
@@ -78,7 +79,7 @@ function updateDB(fromUrl=baseDataURL, toFile=dbPath) {
 
 async function regenMultiSetMap() {
     if (lock) return; lock = true;
-    console.log('Regenerating multi-set map...');
+    logger.log('Regenerating multi-set map...');
     fs.mkdirSync(dirname(multiSetPath), {recursive: true});
 
     // Create map
@@ -107,13 +108,13 @@ async function regenMultiSetMap() {
         multiSetPath,
         JSON.stringify(newMap),
         {encoding: 'utf8'}
-    ).then(() => {console.log('Multi-set map saved.'); lock = false;});
+    ).then(() => {logger.log('Multi-set map saved.'); lock = false;});
 }
 
 // Generate SET files from master object
 async function regenSetFiles() {
     if (lock) return; lock = true;
-    console.log('Regenerating set data...');
+    logger.log('Regenerating set data...');
     fs.mkdirSync(setFolder, {recursive: true});
     const saveFile = set => {
         const fixes = tokenFixes.filter(f => f.testSet(set));
@@ -130,14 +131,14 @@ async function regenSetFiles() {
         );
     }
     return Promise.all(await readJSON(dbPath, ['data',true], null, saveFile))
-        .then(() => {console.log('DB files saved.'); lock = false;})
+        .then(() => {logger.log('DB files saved.'); lock = false;})
         .then(regenCardFiles);
 }
 
 // Generate "Reverse Related" files from master object
 async function regenCardFiles() {
     if (lock) return; lock = true;
-    console.log('Regenerating card-lookup data...');
+    logger.log('Regenerating card-lookup data...');
 
     const writeCards = cards => Promise.all(Object.keys(cards).map(async c => {
         if (!cards[c] || !cards[c].length) return;
@@ -169,13 +170,13 @@ async function regenCardFiles() {
         }
     }
     return writeCards(cards)
-        .then(() => {console.log('Card-lookup DB saved.'); lock = false;});
+        .then(() => {logger.log('Card-lookup DB saved.'); lock = false;});
 }
 
 // Generate name map for translating full set names to set codes
 async function regenNameMap() {
     if (lock) return; lock = true;
-    console.log('Regenerating set name map...');
+    logger.log('Regenerating set name map...');
     const getName = ({code, name}) => [name, code];
     const nameArr = await readJSON(dbPath, ['data',true], null, getName);
     const newNameMap = nameArr.reduce((o,n) => {
@@ -189,10 +190,10 @@ async function regenNameMap() {
     setCodes = getSetCodes(newNameMap);
     fs.mkdirSync(dirname(nameMapPath),{recursive: true});
     return fs.promises.writeFile(nameMapPath,JSON.stringify(newNameMap),{encoding: 'utf8'})
-        .then(() => {console.log('Name Map saved.'); lock = false;});
+        .then(() => {logger.log('Name Map saved.'); lock = false;});
 }
 
-const regenAll = () => regenNameMap().then(regenSetFiles).then(regenMultiSetMap).then(()=>console.log('DB update complete.'));
+const regenAll = () => regenNameMap().then(regenSetFiles).then(regenMultiSetMap).then(()=>logger.log('DB update complete.'));
 
 module.exports = {
     updateDB, isLocked: () => lock,

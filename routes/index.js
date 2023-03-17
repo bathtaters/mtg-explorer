@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const logger = require('../services/logger');
 const { addSlash } = require('../services/fixUrl');
 const { sanitizeSets } = require('../services/setUtils');
 const { sanitizeCards } = require('../services/cardUtils');
@@ -13,7 +14,7 @@ router.get('/', addSlash, function(req, res) {
 
 /* Check set list */
 router.post('/sets', async function(req, res) {
-  console.log('Sets Req:',req.body);
+  logger.log('Sets Req:',req.body);
 
   const invalid = await checkSets(sanitizeSets(req.body.sets));
   return res.status(200).send({ invalid });
@@ -22,7 +23,7 @@ router.post('/sets', async function(req, res) {
 /* POST token data. */
 const sortOpts = ['dateAsc','list','dateDesc']
 router.post('/tokens', async function(req, res) {
-  console.log('Tokens Req:',req.body);
+  logger.log('Tokens Req:',req.body);
 
   const sort = req.body.sort && sortOpts.includes(req.body.sort) ?
     sortOpts.indexOf(req.body.sort) - 1 : 0;
@@ -33,7 +34,7 @@ router.post('/tokens', async function(req, res) {
 
 /* POST card data. */
 router.post('/cards', async function(req, res) {
-  console.log('Cards Req:',{...req.body, cards: '[' + req.body.cards.split('\n').length + ' lines]'});
+  logger.log('Cards Req:',{...req.body, cards: '[' + req.body.cards.split('\n').length + ' lines]'});
 
   const cards = await getCardTokens(sanitizeCards(req.body.cards));
 

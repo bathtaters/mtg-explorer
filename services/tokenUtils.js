@@ -1,3 +1,4 @@
+const logger = require('../services/logger');
 const { mapBaseSet, fixSetCode } = require('./setUtils');
 
 
@@ -34,10 +35,10 @@ exports.removeEqualTokens = (setArr) => {
                 seen.push(token);
             }
             if (set.tokens.length !== remaining.length)
-                console.log(set.name,'removed',set.tokens.length-remaining.length,'non-unique tokens');
+                logger.debug(set.name,'removed',set.tokens.length-remaining.length,'non-unique tokens');
             set.tokens = remaining;
         }
-        if (!set.error && !set.tokens) console.log(set);
+        if (!set.error && !set.tokens) logger.log(set);
         if (set.error || set.tokens.length) result.push(set);
     }
     return result;
@@ -70,13 +71,13 @@ exports.getTokenUrl = token =>
 exports.mapSetToTokens = async (data, getAltSets) => {
     let newTokens = data.tokens.filter(filterToken).map(mapToken);
     if (getAltSets) newTokens = await Promise.all(newTokens.map(t=>appendAltSets(t,getAltSets)));
-    console.log(data.name, 'Tokens:', newTokens.length, 'of', data.tokens.length);
+    logger.debug(data.name, 'Tokens:', newTokens.length, 'of', data.tokens.length);
     return mapBaseSet(data, {tokens: newTokens});
 };
 exports.mapCardToTokens = async (tokens, getAltSets) => {
     let newTokens = Object.values(tokens).filter(filterToken).map(mapToken);
     if (getAltSets) newTokens = await Promise.all(newTokens.map(t=>appendAltSets(t,getAltSets,[false])));
-    // console.log('Tokens:', newTokens.length, 'of', data.tokens.length);
+    logger.debug('Tokens:', newTokens.length, 'of', data.tokens.length);
     return newTokens;
 };
 const getTypes = token =>
