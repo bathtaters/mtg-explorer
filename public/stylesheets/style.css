@@ -52,6 +52,15 @@ a:hover {
 .left { text-align: left; }
 .inline { display: inline-block; }
 
+/* Hide update link */
+#updateLink {
+  text-align: right;
+  opacity: 0.01;
+}
+#updateLink:hover {
+  opacity: 1.0;
+}
+
 /* Token table */
 
 table { border-spacing: 0; }
