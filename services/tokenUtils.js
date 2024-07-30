@@ -58,9 +58,9 @@ exports.uniqueTokenId = token => (
 
 // Card name to Scryfall URL
 exports.getCardUrl = (name, set = '') => 
-    'https://scryfall.com/search?q=' +
+    'https://scryfall.com/search?q=%21%22' +
     escape(name).replace(/%20/,'+') + 
-    (set ? '+set%3A' + fixSetCode(set) : '');
+    (set ? '%22+set%3A' + fixSetCode(set) : '%22');
 exports.getTokenUrl = (token) => {
     const id = typeof token === 'object' ? token.id.scryfall : token
     return `https://cards.scryfall.io/large/front/${id.charAt(0)}/${id.charAt(1)}/${id}.jpg`;
