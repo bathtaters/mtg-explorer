@@ -61,11 +61,11 @@ exports.getCardUrl = (name, set = '') =>
     'https://scryfall.com/search?q=' +
     escape(name).replace(/%20/,'+') + 
     (set ? '+set%3A' + fixSetCode(set) : '');
-exports.getTokenUrl = token =>
-    `https://api.scryfall.com/cards/${
-        typeof token === 'object' ?
-        token.id.scryfall : token
-    }?format=image`;
+exports.getTokenUrl = (token) => {
+    const id = typeof token === 'object' ? token.id.scryfall : token
+    return `https://cards.scryfall.io/large/front/${id.charAt(0)}/${id.charAt(1)}/${id}.jpg`;
+    // return `https://api.scryfall.com/cards/${id}?format=image`;
+}
 
 // Data to retrieve from token
 exports.mapSetToTokens = async (data, getAltSets) => {

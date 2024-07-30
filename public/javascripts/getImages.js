@@ -1,6 +1,7 @@
 function mtgExplorerGetImages() {
     function getImgUrl(scryfallId) {
-        return `https://api.scryfall.com/cards/${scryfallId}?format=image&version=border_crop`;
+        return `https://cards.scryfall.io/large/front/${scryfallId.charAt(0)}/${scryfallId.charAt(1)}/${scryfallId}.jpg`;
+        // return `https://api.scryfall.com/cards/${scryfallId}?format=image&version=border_crop`;
     }
     var localCache = {};
     
@@ -23,7 +24,7 @@ function mtgExplorerGetImages() {
                 var imgURL = URL.createObjectURL(imageBlob);
                 localCache[arr[i].id] = imgURL;
                 placeImage(arr[i]);
-                cont && setTimeout(()=>fetchImages(arr, i+1),100);
+                cont && setTimeout(()=>fetchImages(arr, i+1),10);
             });
     }
 
