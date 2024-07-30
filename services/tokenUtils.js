@@ -77,7 +77,7 @@ exports.mapSetToTokens = async (data, getAltSets) => {
 exports.mapCardToTokens = async (tokens, getAltSets) => {
     let newTokens = Object.values(tokens).filter(filterToken).map(mapToken);
     if (getAltSets) newTokens = await Promise.all(newTokens.map(t=>appendAltSets(t,getAltSets,[false])));
-    logger.debug('Tokens:', newTokens.length, 'of', data.tokens.length);
+    logger.debug('Tokens:', newTokens.length, 'of', Object.keys(tokens).length);
     return newTokens;
 };
 const getTypes = token =>
