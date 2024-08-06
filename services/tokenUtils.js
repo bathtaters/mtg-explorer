@@ -89,7 +89,7 @@ const getFooter = token =>
     (token.power||'-')+'/'+(token.toughness||'-') :
     token.power;
 const mapToken = ({
-    name, faceName, reverseRelated, keywords,
+    name, faceName, relatedCards, keywords,
     colors, types, text, power, toughness,
     number, identifiers, side, isReprint,
     availability, isOnlineOnly, setCode
@@ -105,8 +105,9 @@ const mapToken = ({
     types: getTypes({types}),
     footer: getFooter({power, toughness}),
     setCode: fixSetCode(setCode),
+    reverseRelated: relatedCards && relatedCards.reverseRelated,
     colors, keywords, text, number, side, isReprint,
-    reverseRelated, availability, isOnlineOnly
+    availability, isOnlineOnly
 });
 const appendAltSets = async (token, getAltSets, args = []) => { 
     token.altSets = await getAltSets(token, ...args);
