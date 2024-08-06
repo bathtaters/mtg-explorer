@@ -28,3 +28,7 @@ benchmarks/graphs
 
 # Database
 /db/storage
+
+# Env
+.env
+deploy.sh
