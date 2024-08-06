@@ -29,7 +29,7 @@ block content
                             each card,idx in token.reverseRelated
                                 if idx
                                     span= ', '
-                                a(href=getCardUrl(card,set.code) target="_blank")= card
+                                a(href=getCardUrl(card) target="_blank")= card
                             //-= token.reverseRelated.join ? token.reverseRelated.join(', ') : 'Missing'
                         td.tSets= token.altSets.join ? token.altSets.join(', ') + ' ('+token.altSets.length+')' : 'Missing'
         else
